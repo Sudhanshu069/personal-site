@@ -23,10 +23,17 @@ export default function AboutPage() {
                         <div key={i} className="border-l-2 border-mocha-surface1 pl-4">
                             <h3 className="text-xl font-bold text-mocha-text">{exp.role}</h3>
                             <div className="flex justify-between items-center text-sm text-mocha-overlay mb-2">
-                                <span>{exp.company}</span>
+                                <span>
+                                    {exp.company}
+                                    {exp.location ? <span className="text-mocha-surface2"> • {exp.location}</span> : null}
+                                </span>
                                 <span>{exp.period}</span>
                             </div>
-                            <p className="text-mocha-subtext">{exp.description}</p>
+                            <ul className="list-disc pl-5 space-y-1 text-mocha-subtext">
+                                {exp.highlights.map((h) => (
+                                    <li key={h}>{h}</li>
+                                ))}
+                            </ul>
                         </div>
                     ))}
                 </div>

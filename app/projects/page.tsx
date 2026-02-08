@@ -42,7 +42,7 @@ export default function ProjectsPage() {
                     {filteredProjects.map((p) => (
                         <Link
                             key={p.id}
-                            href={p.link}
+                            href={`/projects/${p.id}`}
                             className="group block border border-mocha-surface0 bg-mocha-mantle/50 rounded-lg p-5 hover:border-mocha-blue transition-all hover:translate-y-[-2px] hover:shadow-lg"
                         >
                             <div className="flex justify-between items-start mb-3">

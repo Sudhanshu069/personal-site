@@ -183,7 +183,7 @@ export function Shell() {
                                 <div key={p.id} className="border border-mocha-surface0 p-3 rounded hover:border-mocha-blue transition-colors">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="text-mocha-blue font-bold">{p.title}</span>
-                                        <Link href={p.link} className="text-xs text-mocha-overlay underline decoration-mocha-overlay hover:text-mocha-text">
+                                        <Link href={`/projects/${p.id}`} className="text-xs text-mocha-overlay underline decoration-mocha-overlay hover:text-mocha-text">
                                             View Details
                                         </Link>
                                     </div>
