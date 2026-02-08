@@ -5,6 +5,7 @@ import { PROFILE } from "@/data/profile";
 import { PROJECTS } from "@/data/projects";
 import Link from "next/link";
 import { PongGame } from "@/components/Terminal/PongGame";
+import { useSearchParams } from "next/navigation";
 
 const ASCII_ART = `
    _____           _ _
@@ -23,50 +24,102 @@ interface HistoryItem {
 
 const COMMANDS = ["help", "about", "experience", "projects", "blog", "contact", "resume", "pong", "clear", "welcome", "history", "pwd"];
 
+const STATUS_LINES = [
+    "Status: prod-safe (probably)",
+    "Mood: shipping",
+    "Latency: sub-500ms on good days",
+    "Uptime: 99.9% (in my dreams)",
+    "Warning: may contain semicolons",
+    "Tip: type 'pong' if you came here to procrastinate",
+] as const;
+
+const COMMAND_HINTS: Record<string, string> = {
+    experience: "skills + work + impact",
+    projects: "featured builds",
+    resume: "full PDF",
+    contact: "email + socials",
+    blog: "posts",
+};
+
+function getGhostHint(rawInput: string) {
+    const input = rawInput.trim().toLowerCase();
+    if (!input) return null;
+    if (input.includes(" ")) return null;
+
+    const candidates = Object.keys(COMMAND_HINTS);
+    const matches = candidates.filter((c) => c.startsWith(input));
+    if (matches.length !== 1) return null;
+
+    const cmd = matches[0];
+    if (cmd === input) return null;
+
+    const suffix = cmd.slice(input.length);
+    return `${suffix}  → ${COMMAND_HINTS[cmd]}`;
+}
+
+function WelcomeBlock({ heading }: { heading: string }) {
+    const [statusLine, setStatusLine] = useState<string>("");
+
+    useEffect(() => {
+        const t = window.setTimeout(() => {
+            const idx = Math.floor(Math.random() * STATUS_LINES.length);
+            setStatusLine(STATUS_LINES[idx] ?? "");
+        }, 0);
+        return () => window.clearTimeout(t);
+    }, []);
+
+    return (
+        <div className="space-y-2 mb-4">
+            <pre className="text-mocha-mauve font-bold text-xs md:text-sm leading-none mb-4 whitespace-pre overflow-x-auto">
+                {ASCII_ART}
+            </pre>
+            <p>{PROFILE.name} — {PROFILE.title}</p>
+            {statusLine ? <p className="text-mocha-overlay">{statusLine}</p> : null}
+            <div className="pt-2 space-y-1">
+                <p className="text-mocha-subtext">{heading}</p>
+                <div className="pl-2 font-mono space-y-1">
+                    <div>
+                        <span className="text-mocha-subtext">1)</span>{" "}
+                        <span className="text-mocha-yellow">experience</span>{" "}
+                        <span className="text-mocha-subtext">→ skills + work + impact</span>
+                    </div>
+                    <div>
+                        <span className="text-mocha-subtext">2)</span>{" "}
+                        <span className="text-mocha-yellow">projects</span>{" "}
+                        <span className="text-mocha-subtext">→ featured builds</span>
+                    </div>
+                    <div>
+                        <span className="text-mocha-subtext">3)</span>{" "}
+                        <span className="text-mocha-yellow">resume</span>{" "}
+                        <span className="text-mocha-subtext">→ full PDF</span>
+                    </div>
+                    <div>
+                        <span className="text-mocha-subtext">4)</span>{" "}
+                        <span className="text-mocha-yellow">contact</span>{" "}
+                        <span className="text-mocha-subtext">→ email + socials</span>
+                    </div>
+                </div>
+            </div>
+            <p>
+                For a list of available commands, type &apos;
+                <span className="text-mocha-green">help</span>&apos;.
+            </p>
+            <p className="text-mocha-subtext">
+                Pro tip: Tab to autocomplete, ↑ for history, Ctrl+L to wipe terminal
+            </p>
+        </div>
+    );
+}
+
 export function Shell() {
+    const searchParams = useSearchParams();
     const [input, setInput] = useState("");
     const [activeApp, setActiveApp] = useState<null | "pong">(null);
     const [history, setHistory] = useState<HistoryItem[]>(() => [
         {
             id: "welcome",
             command: "welcome",
-            output: (
-                <div className="space-y-2 mb-4">
-                    <pre className="text-mocha-mauve font-bold text-xs md:text-sm leading-none mb-4 whitespace-pre overflow-x-auto">
-                        {ASCII_ART}
-                    </pre>
-                    <p>{PROFILE.name} — {PROFILE.title}</p>
-                    <div className="pt-2 space-y-1">
-                        <p className="text-mocha-subtext">Try this:</p>
-                        <div className="pl-2 font-mono space-y-1">
-                            <div>
-                                <span className="text-mocha-subtext">1)</span>{" "}
-                                <span className="text-mocha-yellow">experience</span>{" "}
-                                <span className="text-mocha-subtext">→ skills + work + impact</span>
-                            </div>
-                            <div>
-                                <span className="text-mocha-subtext">2)</span>{" "}
-                                <span className="text-mocha-yellow">projects</span>{" "}
-                                <span className="text-mocha-subtext">→ featured builds</span>
-                            </div>
-                            <div>
-                                <span className="text-mocha-subtext">3)</span>{" "}
-                                <span className="text-mocha-yellow">resume</span>{" "}
-                                <span className="text-mocha-subtext">→ full PDF</span>
-                            </div>
-                            <div>
-                                <span className="text-mocha-subtext">4)</span>{" "}
-                                <span className="text-mocha-yellow">contact</span>{" "}
-                                <span className="text-mocha-subtext">→ email + socials</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p>
-                        For a list of available commands, type &apos;
-                        <span className="text-mocha-green">help</span>&apos;.
-                    </p>
-                </div>
-            ),
+            output: <WelcomeBlock heading="Pick your route:" />,
         },
     ]);
     const [historyIndex, setHistoryIndex] = useState<number | null>(null);
@@ -74,6 +127,7 @@ export function Shell() {
     const inputRef = useRef<HTMLInputElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const skipAutoScrollOnceRef = useRef(true);
+    const queryRunRef = useRef<string | null>(null);
 
     useEffect(() => {
         // Auto-scroll to bottom when history changes
@@ -96,6 +150,8 @@ export function Shell() {
         inputRef.current?.focus();
     }, []);
 
+    const runParam = searchParams.get("run")?.toLowerCase() ?? null;
+
     const handleCommand = (cmd: string) => {
         const cleanCmd = cmd.trim().toLowerCase();
         const entryId =
@@ -106,41 +162,9 @@ export function Shell() {
 
         switch (cleanCmd) {
             case "welcome":
-                output = (
-                    <div className="space-y-2 mb-4">
-                        <pre className="text-mocha-mauve font-bold text-xs md:text-sm leading-none mb-4 whitespace-pre overflow-x-auto">
-                            {ASCII_ART}
-                        </pre>
-                        <p>{PROFILE.name} — {PROFILE.title}</p>
-                        <div className="pt-2 space-y-1">
-                            <p className="text-mocha-subtext">Try this:</p>
-                            <div className="pl-2 font-mono space-y-1">
-                                <div>
-                                    <span className="text-mocha-subtext">1)</span>{" "}
-                                    <span className="text-mocha-yellow">experience</span>{" "}
-                                    <span className="text-mocha-subtext">→ skills + work + impact</span>
-                                </div>
-                                <div>
-                                    <span className="text-mocha-subtext">2)</span>{" "}
-                                    <span className="text-mocha-yellow">projects</span>{" "}
-                                    <span className="text-mocha-subtext">→ featured builds</span>
-                                </div>
-                                <div>
-                                    <span className="text-mocha-subtext">3)</span>{" "}
-                                    <span className="text-mocha-yellow">resume</span>{" "}
-                                    <span className="text-mocha-subtext">→ full PDF</span>
-                                </div>
-                                <div>
-                                    <span className="text-mocha-subtext">4)</span>{" "}
-                                    <span className="text-mocha-yellow">contact</span>{" "}
-                                    <span className="text-mocha-subtext">→ email + socials</span>
-                                </div>
-                            </div>
-                        </div>
-                        <p>For a list of available commands, type &apos;<span className="text-mocha-green">help</span>&apos;.</p>
-                    </div>
-                );
+                output = <WelcomeBlock heading="Try this:" />;
                 break;
+            case "ls":
             case "help":
                 output = (
                     <div className="space-y-4">
@@ -186,7 +210,7 @@ export function Shell() {
                                 <div className="text-mocha-subtext">=&gt; go back to previous command</div>
                             </div>
                             <div className="grid grid-cols-[auto_1fr] gap-x-4">
-                                <div className="text-mocha-text font-bold w-32">Ctrl + l</div>
+                                <div className="text-mocha-text font-bold w-32">Ctrl + L</div>
                                 <div className="text-mocha-subtext">=&gt; clear the terminal</div>
                             </div>
                         </div>
@@ -381,9 +405,13 @@ export function Shell() {
                     </div>
                 );
                 break;
+            case "whoami":
+                output = <div className="text-mocha-text">visitor</div>;
+                break;
             case "pwd":
                 output = <div className="text-mocha-text">/home/visitor</div>;
                 break;
+            case "q":
             case "clear":
                 setHistory([]);
                 return;
@@ -407,6 +435,18 @@ export function Shell() {
             },
         ]);
     };
+
+    useEffect(() => {
+        if (!runParam) return;
+        if (queryRunRef.current === runParam) return;
+
+        // Only allow safe, query-driven entry points
+        if (runParam !== "about" && runParam !== "contact") return;
+
+        queryRunRef.current = runParam;
+        handleCommand(runParam);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [runParam]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "ArrowUp") {
@@ -478,6 +518,8 @@ export function Shell() {
         setTempInput("");
     };
 
+    const ghostHint = getGhostHint(input);
+
     return (
         <div
             className="h-full overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-mocha-surface1"
@@ -507,17 +549,30 @@ export function Shell() {
                 <form onSubmit={handleSubmit} className="flex items-center gap-2">
                     <span className="text-mocha-green">➜</span>
                     <span className="text-mocha-blue">~</span>
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        className="flex-1 bg-transparent outline-none border-none text-mocha-text placeholder-mocha-overlay"
-                        autoFocus
-                        spellCheck={false}
-                        autoComplete="off"
-                    />
+                    <div className="relative flex-1 overflow-hidden">
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0 flex items-center font-mono"
+                        >
+                            <span className="text-mocha-text whitespace-pre">{input}</span>
+                            {ghostHint ? (
+                                <span className="text-mocha-overlay/70 whitespace-pre">
+                                    {ghostHint}
+                                </span>
+                            ) : null}
+                        </div>
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="relative w-full bg-transparent outline-none border-none text-transparent caret-mocha-green font-mono placeholder-mocha-overlay"
+                            autoFocus
+                            spellCheck={false}
+                            autoComplete="off"
+                        />
+                    </div>
                 </form>
             )}
         </div>
