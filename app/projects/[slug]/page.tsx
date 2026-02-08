@@ -2,16 +2,16 @@ import { getPostBySlug } from "@/lib/mdx";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { MDXRemote } from "next-mdx-remote/rsc";
 
 interface ProjectPageProps {
-    params: {
+    params: Promise<{
         slug: string;
-    };
+    }>;
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-    const post = await getPostBySlug(params.slug, "projects");
+    const { slug } = await params;
+    const post = await getPostBySlug(slug, "projects");
 
     if (!post) {
         notFound();

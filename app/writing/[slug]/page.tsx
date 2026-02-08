@@ -4,13 +4,14 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 interface BlogPostPageProps {
-    params: {
+    params: Promise<{
         slug: string;
-    };
+    }>;
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-    const post = await getPostBySlug(params.slug, "posts");
+    const { slug } = await params;
+    const post = await getPostBySlug(slug, "posts");
 
     if (!post) {
         notFound();
