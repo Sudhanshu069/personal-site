@@ -50,6 +50,7 @@ const ROAST_LITE_LINES = [
     "Nice try.",
     "That’s not a thing (yet).",
     "404: command missing.",
+    "that command is in staging."
 ] as const;
 
 const COMMAND_HINTS: Record<string, string> = {
@@ -72,6 +73,33 @@ const COWSAY_LINES = [
     "Idempotency: because humans double-click.",
     "Cache invalidation is my cardio.",
     "Minimal UI. Maximum keyboard.",
+    "Idempotency: because humans double-click.",
+	"Cache invalidation is my cardio.",
+	"Retries are love. Retries are pain.",
+	"Distributed systems: where maybe becomes a feature.",
+	"Every request is a mystery until the trace shows up.",
+	"Latency is a tax. I try not to pay it.",
+	"If it’s event-driven, it’s also event-debugging.",
+	"I speak fluent HTTP. And occasional gRPC.",
+	"The bug is in the edge case. It’s always the edge case.",
+    "Unknown command? Sounds like a feature request",
+	"I can’t fix your prod, but I can fix your CI.",
+	"Be nice to alerts. They’re trying their best.",
+	"Congratulations, you found the cow.",
+    "99.9% uptime is still 43 minutes of chaos per month."
+] as const;
+
+const IDLE_LINES = [
+    "psst… type 'pong' if you're bored.",
+    "still there? your CPU misses you.",
+    "idle detected. running: nothing.",
+    "keyboard timeout… press any key to resume existence.",
+    "if you’re stuck, try 'help' (I won’t judge).",
+    "fun fact: uptime increases even when you don’t.",
+    "this is the part where you type 'projects'.",
+    "brb, pretending to be a real shell…",
+    "no input for 20s. mood: suspiciously calm.",
+    "type 'resume' to drop the PDF like it’s hot.",
 ] as const;
 
 function getGhostHint(rawInput: string) {
@@ -213,6 +241,71 @@ function renderCowsay(message: string) {
     return [top, ...bubble, bottom, ...cow].join("\n");
 }
 
+function AchievementLine({ label }: { label: string }) {
+    return (
+        <div className="text-xs font-mono text-mocha-overlay">
+            achievement unlocked:{" "}
+            <span className="text-mocha-yellow">{label}</span>
+        </div>
+    );
+}
+
+async function copyToClipboard(text: string) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch {
+        // Fallback for environments where Clipboard API is unavailable.
+        try {
+            const el = document.createElement("textarea");
+            el.value = text;
+            el.setAttribute("readonly", "");
+            el.style.position = "fixed";
+            el.style.top = "-9999px";
+            document.body.appendChild(el);
+            el.select();
+            const ok = document.execCommand("copy");
+            document.body.removeChild(el);
+            return ok;
+        } catch {
+            return false;
+        }
+    }
+}
+
+function CopyableLink({
+    label,
+    value,
+}: {
+    label: string;
+    value: string;
+}) {
+    const [copied, setCopied] = useState(false);
+
+    return (
+        <div className="space-y-1">
+            <div className="flex flex-wrap gap-x-2 gap-y-1 items-baseline">
+                <span className="text-mocha-subtext">{label}:</span>
+                <button
+                    type="button"
+                    onClick={async () => {
+                        const ok = await copyToClipboard(value);
+                        setCopied(ok);
+                        window.setTimeout(() => setCopied(false), 1200);
+                    }}
+                    className="text-mocha-mauve hover:text-mocha-pink underline decoration-mocha-overlay text-left"
+                    title="Click to copy"
+                >
+                    {value}
+                </button>
+            </div>
+            {copied ? (
+                <div className="text-xs font-mono text-mocha-green">copied ✓</div>
+            ) : null}
+        </div>
+    );
+}
+
 function WelcomeBlock({ heading }: { heading: string }) {
     const [statusLine, setStatusLine] = useState<string>("");
 
@@ -284,6 +377,12 @@ function ShellWithParams() {
     const scrollRef = useRef<HTMLDivElement>(null);
     const skipAutoScrollOnceRef = useRef(true);
     const queryRunRef = useRef<string | null>(null);
+    const helpCountRef = useRef(0);
+    const manpageShownRef = useRef(false);
+    const achievementsRef = useRef({
+        procrastinator: false,
+        documentationEnjoyer: false,
+    });
 
     useEffect(() => {
         // Auto-scroll to bottom when history changes
@@ -310,6 +409,8 @@ function ShellWithParams() {
 
     const handleCommand = (cmd: string): { nextInput?: string } | void => {
         const cleanCmd = cmd.trim().toLowerCase();
+        const isHelp = cleanCmd === "help";
+        const isHelpHelp = /^help\s+help$/.test(cleanCmd);
         const entryId =
             typeof crypto !== "undefined" && "randomUUID" in crypto
                 ? crypto.randomUUID()
@@ -317,7 +418,122 @@ function ShellWithParams() {
         let output: React.ReactNode;
         let nextInput: string | undefined;
 
-        switch (cleanCmd) {
+        if (isHelp || isHelpHelp) {
+            helpCountRef.current += 1;
+        }
+
+        if (isHelpHelp && !manpageShownRef.current) {
+            manpageShownRef.current = true;
+            const unlockDoc =
+                helpCountRef.current >= 3 &&
+                !achievementsRef.current.documentationEnjoyer;
+
+            output = (
+                <div className="space-y-3 font-mono">
+                    <div>
+                        <div className="text-mocha-subtext">NAME</div>
+                        <div className="text-mocha-text">
+                            help — terminal commands & shortcuts
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="text-mocha-subtext">SYNOPSIS</div>
+                        <div className="text-mocha-text">
+                            <span className="text-mocha-yellow">help</span>{" "}
+                            <span className="text-mocha-overlay">|</span>{" "}
+                            <span className="text-mocha-yellow">about</span>{" "}
+                            <span className="text-mocha-overlay">|</span>{" "}
+                            <span className="text-mocha-yellow">experience</span>{" "}
+                            <span className="text-mocha-overlay">|</span>{" "}
+                            <span className="text-mocha-yellow">projects</span>{" "}
+                            <span className="text-mocha-overlay">|</span>{" "}
+                            <span className="text-mocha-yellow">blog</span>{" "}
+                            <span className="text-mocha-overlay">|</span>{" "}
+                            <span className="text-mocha-yellow">contact</span>{" "}
+                            <span className="text-mocha-overlay">|</span>{" "}
+                            <span className="text-mocha-yellow">resume</span>{" "}
+                            <span className="text-mocha-overlay">|</span>{" "}
+                            <span className="text-mocha-yellow">pong</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="text-mocha-subtext">COMMANDS</div>
+                        <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 max-w-3xl">
+                            <div className="text-mocha-yellow">about</div>
+                            <div className="text-mocha-subtext">about {PROFILE.name}</div>
+
+                            <div className="text-mocha-yellow">experience</div>
+                            <div className="text-mocha-subtext">skills + work + impact</div>
+
+                            <div className="text-mocha-yellow">projects</div>
+                            <div className="text-mocha-subtext">featured builds</div>
+
+                            <div className="text-mocha-yellow">blog</div>
+                            <div className="text-mocha-subtext">posts</div>
+
+                            <div className="text-mocha-yellow">contact</div>
+                            <div className="text-mocha-subtext">email + socials</div>
+
+                            <div className="text-mocha-yellow">resume</div>
+                            <div className="text-mocha-subtext">open /resume.pdf</div>
+
+                            <div className="text-mocha-yellow">pong</div>
+                            <div className="text-mocha-subtext">tiny game</div>
+
+                            <div className="text-mocha-yellow">history</div>
+                            <div className="text-mocha-subtext">show previous commands</div>
+
+                            <div className="text-mocha-yellow">clear</div>
+                            <div className="text-mocha-subtext">wipe terminal</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="text-mocha-subtext">TIPS</div>
+                        <div className="space-y-1 text-mocha-text">
+                            <div>
+                                <span className="text-mocha-subtext">Tab</span>{" "}
+                                <span className="text-mocha-overlay">→</span>{" "}
+                                autocomplete
+                            </div>
+                            <div>
+                                <span className="text-mocha-subtext">↑/↓</span>{" "}
+                                <span className="text-mocha-overlay">→</span>{" "}
+                                history
+                            </div>
+                            <div>
+                                <span className="text-mocha-subtext">Ctrl+L</span>{" "}
+                                <span className="text-mocha-overlay">→</span>{" "}
+                                clear
+                            </div>
+                        </div>
+                    </div>
+
+                    {unlockDoc ? <AchievementLine label="documentation enjoyer" /> : null}
+                </div>
+            );
+
+            setHistory((prev) => [
+                ...prev,
+                {
+                    id: entryId,
+                    command: cmd,
+                    output,
+                },
+            ]);
+
+            if (unlockDoc) {
+                achievementsRef.current.documentationEnjoyer = true;
+            }
+
+            return;
+        }
+
+        const effectiveCmd = isHelpHelp ? "help" : cleanCmd;
+
+        switch (effectiveCmd) {
             case "welcome":
                 output = <WelcomeBlock heading="Try this:" />;
                 break;
@@ -371,8 +587,22 @@ function ShellWithParams() {
                                 <div className="text-mocha-subtext">=&gt; clear the terminal</div>
                             </div>
                         </div>
+
+                        {effectiveCmd === "help" &&
+                            helpCountRef.current >= 3 &&
+                            !achievementsRef.current.documentationEnjoyer ? (
+                            <AchievementLine label="documentation enjoyer" />
+                        ) : null}
                     </div>
                 );
+
+                if (
+                    effectiveCmd === "help" &&
+                    helpCountRef.current >= 3 &&
+                    !achievementsRef.current.documentationEnjoyer
+                ) {
+                    achievementsRef.current.documentationEnjoyer = true;
+                }
                 break;
             case "about":
                 output = (
@@ -494,17 +724,9 @@ function ShellWithParams() {
                                 {PROFILE.email}
                             </a>
                         </p>
-                        <div className="flex flex-wrap gap-4">
-                            {PROFILE.socials.map(s => (
-                                <a
-                                    key={s.name}
-                                    href={s.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-mocha-mauve hover:text-mocha-pink"
-                                >
-                                    {s.name}
-                                </a>
+                        <div className="space-y-2">
+                            {PROFILE.socials.map((s) => (
+                                <CopyableLink key={s.name} label={s.name} value={s.url} />
                             ))}
                         </div>
                     </div>
@@ -539,27 +761,36 @@ function ShellWithParams() {
             case "pong":
                 setActiveApp("pong");
                 output = (
-                    <PongGame
-                        onExit={() => {
-                            setActiveApp(null);
-                            setHistory((prev) =>
-                                prev.map((item) =>
-                                    item.id === entryId
-                                        ? {
-                                            ...item,
-                                            output: (
-                                                <div className="text-mocha-subtext font-mono">
-                                                    exited pong
-                                                </div>
-                                            ),
-                                        }
-                                        : item
-                                )
-                            );
-                            setTimeout(() => inputRef.current?.focus(), 0);
-                        }}
-                    />
+                    <div className="space-y-2">
+                        {!achievementsRef.current.procrastinator ? (
+                            <AchievementLine label="procrastinator" />
+                        ) : null}
+                        <PongGame
+                            onExit={() => {
+                                setActiveApp(null);
+                                setHistory((prev) =>
+                                    prev.map((item) =>
+                                        item.id === entryId
+                                            ? {
+                                                ...item,
+                                                output: (
+                                                    <div className="text-mocha-subtext font-mono">
+                                                        exited pong
+                                                    </div>
+                                                ),
+                                            }
+                                            : item
+                                    )
+                                );
+                                setTimeout(() => inputRef.current?.focus(), 0);
+                            }}
+                        />
+                    </div>
                 );
+
+                if (!achievementsRef.current.procrastinator) {
+                    achievementsRef.current.procrastinator = true;
+                }
                 break;
             case "history":
                 output = (
