@@ -26,10 +26,10 @@ Visit [http://localhost:3000](http://localhost:3000) to see your site.
 
 ## ✨ Features
 
-- **Interactive Terminal Shell**: Type commands like `help`, `welcome`, `projects`, `writing`, `about`, `resume`, `socials`, `email`, `history`, `clear`
+- **Interactive Terminal Shell**: Type commands like `help`, `welcome`, `projects`, `blog`, `about`, `resume`, `contact`, `history`, `clear`
 - **Keyboard shortcuts**: `Tab` autocomplete, `↑/↓` history, `Ctrl+l` clear, `Esc` back to `~`
 - **Project Showcase**: Filterable project gallery with MDX-powered detail pages
-- **Blog/Writing**: MDX-based blog with frontmatter support
+- **Blog**: MDX-based blog with frontmatter support
 - **Catppuccin Mocha Theme**: Beautiful dark theme with 21 carefully chosen colors
 - **Fully Responsive**: Works seamlessly on mobile and desktop
 - **Type-Safe**: Built with TypeScript for reliability

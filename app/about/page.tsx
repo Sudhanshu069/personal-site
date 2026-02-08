@@ -9,7 +9,7 @@ export default function AboutPage() {
 
                 <div className="prose prose-invert prose-mocha mb-8">
                     <p className="text-mocha-text text-lg leading-relaxed">
-                        Hello! I&apos;m <span className="text-mocha-blue font-bold">{PROFILE.name}</span>, a {PROFILE.tagline} based in {PROFILE.location}.
+                        Hello! I&apos;m <span className="text-mocha-blue font-bold">{PROFILE.name}</span>, a {PROFILE.title} based in {PROFILE.location}.
                     </p>
                     <p className="text-mocha-subtext">
                         I love building tools that empower developers and crafting user interfaces that feel like magic.

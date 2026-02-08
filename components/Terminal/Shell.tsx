@@ -21,7 +21,7 @@ interface HistoryItem {
     output: React.ReactNode;
 }
 
-const COMMANDS = ["help", "about", "projects", "writing", "contact", "resume", "pong", "clear", "welcome", "history", "email", "socials", "whoami", "pwd"];
+const COMMANDS = ["help", "about", "experience", "projects", "blog", "contact", "resume", "pong", "clear", "welcome", "history", "pwd"];
 
 export function Shell() {
     const [input, setInput] = useState("");
@@ -35,21 +35,32 @@ export function Shell() {
                     <pre className="text-mocha-mauve font-bold text-xs md:text-sm leading-none mb-4 whitespace-pre overflow-x-auto">
                         {ASCII_ART}
                     </pre>
-                    <p>Welcome to my terminal portfolio. (Version 1.0.0)</p>
-                    <p>----</p>
-                    <p>
-                        This project&apos;s source code can be found in this project&apos;s{" "}
-                        <a
-                            href={PROFILE.socials.find(s => s.name === "GitHub")?.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-mocha-yellow underline decoration-dashed underline-offset-4"
-                        >
-                            GitHub repo
-                        </a>
-                        .
-                    </p>
-                    <p>----</p>
+                    <p>{PROFILE.name} — {PROFILE.title}</p>
+                    <div className="pt-2 space-y-1">
+                        <p className="text-mocha-subtext">Try this:</p>
+                        <div className="pl-2 font-mono space-y-1">
+                            <div>
+                                <span className="text-mocha-subtext">1)</span>{" "}
+                                <span className="text-mocha-yellow">experience</span>{" "}
+                                <span className="text-mocha-subtext">→ skills + work + impact</span>
+                            </div>
+                            <div>
+                                <span className="text-mocha-subtext">2)</span>{" "}
+                                <span className="text-mocha-yellow">projects</span>{" "}
+                                <span className="text-mocha-subtext">→ featured builds</span>
+                            </div>
+                            <div>
+                                <span className="text-mocha-subtext">3)</span>{" "}
+                                <span className="text-mocha-yellow">resume</span>{" "}
+                                <span className="text-mocha-subtext">→ full PDF</span>
+                            </div>
+                            <div>
+                                <span className="text-mocha-subtext">4)</span>{" "}
+                                <span className="text-mocha-yellow">contact</span>{" "}
+                                <span className="text-mocha-subtext">→ email + socials</span>
+                            </div>
+                        </div>
+                    </div>
                     <p>
                         For a list of available commands, type &apos;
                         <span className="text-mocha-green">help</span>&apos;.
@@ -100,21 +111,32 @@ export function Shell() {
                         <pre className="text-mocha-mauve font-bold text-xs md:text-sm leading-none mb-4 whitespace-pre overflow-x-auto">
                             {ASCII_ART}
                         </pre>
-                        <p>Welcome to my terminal portfolio. (Version 1.0.0)</p>
-                        <p>----</p>
-                        <p>
-                            This project&apos;s source code can be found in this project&apos;s{" "}
-                            <a
-                                href={PROFILE.socials.find(s => s.name === "GitHub")?.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-mocha-yellow underline decoration-dashed underline-offset-4"
-                            >
-                                GitHub repo
-                            </a>
-                            .
-                        </p>
-                        <p>----</p>
+                        <p>{PROFILE.name} — {PROFILE.title}</p>
+                        <div className="pt-2 space-y-1">
+                            <p className="text-mocha-subtext">Try this:</p>
+                            <div className="pl-2 font-mono space-y-1">
+                                <div>
+                                    <span className="text-mocha-subtext">1)</span>{" "}
+                                    <span className="text-mocha-yellow">experience</span>{" "}
+                                    <span className="text-mocha-subtext">→ skills + work + impact</span>
+                                </div>
+                                <div>
+                                    <span className="text-mocha-subtext">2)</span>{" "}
+                                    <span className="text-mocha-yellow">projects</span>{" "}
+                                    <span className="text-mocha-subtext">→ featured builds</span>
+                                </div>
+                                <div>
+                                    <span className="text-mocha-subtext">3)</span>{" "}
+                                    <span className="text-mocha-yellow">resume</span>{" "}
+                                    <span className="text-mocha-subtext">→ full PDF</span>
+                                </div>
+                                <div>
+                                    <span className="text-mocha-subtext">4)</span>{" "}
+                                    <span className="text-mocha-yellow">contact</span>{" "}
+                                    <span className="text-mocha-subtext">→ email + socials</span>
+                                </div>
+                            </div>
+                        </div>
                         <p>For a list of available commands, type &apos;<span className="text-mocha-green">help</span>&apos;.</p>
                     </div>
                 );
@@ -130,11 +152,11 @@ export function Shell() {
                             <div className="text-mocha-subtext">- clear the terminal</div>
                             
                             <div><span className="text-mocha-yellow">contact</span></div>
-                            <div className="text-mocha-subtext">- get in touch</div>
-
-                            <div><span className="text-mocha-yellow">email</span></div>
-                            <div className="text-mocha-subtext">- send an email to me</div>
+                            <div className="text-mocha-subtext">- reach me (email + socials)</div>
                             
+                            <div><span className="text-mocha-yellow">experience</span></div>
+                            <div className="text-mocha-subtext">- view skills + work experience</div>
+
                             <div><span className="text-mocha-yellow">help</span></div>
                             <div className="text-mocha-subtext">- check available commands</div>
 
@@ -147,22 +169,10 @@ export function Shell() {
                             <div><span className="text-mocha-yellow">pong</span></div>
                             <div className="text-mocha-subtext">- play ping pong in the terminal</div>
 
-                            <div><span className="text-mocha-yellow">pwd</span></div>
-                            <div className="text-mocha-subtext">- print current working directory</div>
-                            
                             <div><span className="text-mocha-yellow">resume</span></div>
                             <div className="text-mocha-subtext">- check out my resume</div>
 
-                            <div><span className="text-mocha-yellow">socials</span></div>
-                            <div className="text-mocha-subtext">- check out my social accounts</div>
-                            
-                            <div><span className="text-mocha-yellow">welcome</span></div>
-                            <div className="text-mocha-subtext">- display hero section</div>
-
-                            <div><span className="text-mocha-yellow">whoami</span></div>
-                            <div className="text-mocha-subtext">- about current user</div>
-                            
-                            <div><span className="text-mocha-yellow">writing</span></div>
+                            <div><span className="text-mocha-yellow">blog</span></div>
                             <div className="text-mocha-subtext">- read my blog posts</div>
                         </div>
                         
@@ -172,7 +182,7 @@ export function Shell() {
                                 <div className="text-mocha-subtext">=&gt; autocompletes the command</div>
                             </div>
                             <div className="grid grid-cols-[auto_1fr] gap-x-4">
-                                <div className="text-mocha-text font-bold w-32">Up Arrow</div>
+                                <div className="text-mocha-text font-bold w-32">↑</div>
                                 <div className="text-mocha-subtext">=&gt; go back to previous command</div>
                             </div>
                             <div className="grid grid-cols-[auto_1fr] gap-x-4">
@@ -187,9 +197,53 @@ export function Shell() {
                 output = (
                     <div className="space-y-2">
                         <p>Name: <span className="text-mocha-blue">{PROFILE.name}</span></p>
-                        <p>Role: <span className="text-mocha-green">{PROFILE.tagline}</span></p>
+                        <p>Role: <span className="text-mocha-green">{PROFILE.title}</span></p>
                         <p>Location: <span className="text-mocha-peach">{PROFILE.location}</span></p>
                         <p className="mt-2 text-mocha-subtext">Type <span className="text-mocha-yellow">resume</span> for more details.</p>
+                    </div>
+                );
+                break;
+            case "experience":
+            case "skills": // alias
+                output = (
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <p className="text-mocha-subtext">Skills</p>
+                            <div className="flex flex-wrap gap-2">
+                                {PROFILE.skills.map((skill) => (
+                                    <span
+                                        key={skill}
+                                        className="text-xs px-2 py-1 bg-mocha-surface0 text-mocha-text rounded-md font-mono"
+                                    >
+                                        {skill}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <p className="text-mocha-subtext">Experience</p>
+                            {PROFILE.experience.map((exp) => (
+                                <div key={`${exp.company}-${exp.role}-${exp.period}`} className="space-y-2">
+                                    <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-1">
+                                        <div className="text-mocha-text">
+                                            <span className="text-mocha-blue font-bold">{exp.role}</span>{" "}
+                                            <span className="text-mocha-subtext">at</span>{" "}
+                                            <span className="text-mocha-text font-bold">{exp.company}</span>
+                                            {exp.location ? (
+                                                <span className="text-mocha-overlay"> • {exp.location}</span>
+                                            ) : null}
+                                        </div>
+                                        <div className="text-mocha-overlay font-mono text-sm">{exp.period}</div>
+                                    </div>
+                                    <ul className="list-disc pl-5 space-y-1 text-mocha-subtext">
+                                        {exp.highlights.map((h) => (
+                                            <li key={h}>{h}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 );
                 break;
@@ -220,13 +274,14 @@ export function Shell() {
                     </div>
                 );
                 break;
-            case "writing":
+            case "blog":
+            case "writing": // alias
                 output = (
                     <div className="space-y-2">
-                        <p>Redirecting to writing...</p>
+                        <p>Redirecting to blog...</p>
                         <p className="text-mocha-subtext">
                             If not redirected,{" "}
-                            <Link href="/writing" className="text-mocha-blue underline">
+                            <Link href="/blog" className="text-mocha-blue underline">
                                 click here
                             </Link>
                             .
@@ -235,16 +290,27 @@ export function Shell() {
                 );
                 // Client-side navigation helper
                 setTimeout(() => {
-                    window.location.href = "/writing";
+                    window.location.href = "/blog";
                 }, 150);
                 break;
             case "contact":
                 output = (
-                    <div className="space-y-2">
-                        <p>Email: <a href={`mailto:${PROFILE.email}`} className="text-mocha-blue underline">{PROFILE.email}</a></p>
-                        <div className="flex gap-4">
+                    <div className="space-y-3">
+                        <p>
+                            Email:{" "}
+                            <a href={`mailto:${PROFILE.email}`} className="text-mocha-blue underline">
+                                {PROFILE.email}
+                            </a>
+                        </p>
+                        <div className="flex flex-wrap gap-4">
                             {PROFILE.socials.map(s => (
-                                <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer" className="text-mocha-mauve hover:text-mocha-pink">
+                                <a
+                                    key={s.name}
+                                    href={s.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-mocha-mauve hover:text-mocha-pink"
+                                >
                                     {s.name}
                                 </a>
                             ))}
@@ -252,18 +318,31 @@ export function Shell() {
                     </div>
                 );
                 break;
+            case "email":
+            case "socials":
+                output = (
+                    <div className="text-mocha-subtext">
+                        Use <span className="text-mocha-yellow">contact</span>.
+                    </div>
+                );
+                break;
             case "resume":
                 output = (
                     <div className="space-y-2">
                         <p>Redirecting to resume...</p>
-                        <script dangerouslySetInnerHTML={{ __html: `window.location.href = '/resume'` }} />
-                        <p className="text-mocha-subtext">If not redirected, <Link href="/resume" className="text-mocha-blue underline">click here</Link>.</p>
+                        <p className="text-mocha-subtext">
+                            If not redirected,{" "}
+                            <a href="/resume.pdf" className="text-mocha-blue underline">
+                                click here
+                            </a>
+                            .
+                        </p>
                     </div>
                 );
                 // Client-side navigation helper
                 setTimeout(() => {
-                    window.location.href = "/resume";
-                }, 1000);
+                    window.location.href = "/resume.pdf";
+                }, 150);
                 break;
             case "pong":
                 setActiveApp("pong");
@@ -301,30 +380,6 @@ export function Shell() {
                         ))}
                     </div>
                 );
-                break;
-            case "email":
-                output = (
-                    <div className="text-mocha-text">
-                        mailto:<a href={`mailto:${PROFILE.email}`} className="text-mocha-blue underline">{PROFILE.email}</a>
-                    </div>
-                );
-                break;
-            case "socials":
-                output = (
-                    <div className="space-y-2">
-                        {PROFILE.socials.map(s => (
-                            <div key={s.name}>
-                                <span className="text-mocha-green w-24 inline-block">{s.name}</span>
-                                <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-mocha-blue hover:underline">
-                                    {s.url}
-                                </a>
-                            </div>
-                        ))}
-                    </div>
-                );
-                break;
-            case "whoami":
-                output = <div className="text-mocha-text">visitor</div>;
                 break;
             case "pwd":
                 output = <div className="text-mocha-text">/home/visitor</div>;

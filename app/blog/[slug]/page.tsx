@@ -21,9 +21,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
     return (
         <div className="h-full flex flex-col p-4 md:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-mocha-surface1">
-            <Link href="/writing" className="flex items-center text-mocha-overlay hover:text-mocha-text mb-6 group w-fit">
+            <Link href="/blog" className="flex items-center text-mocha-overlay hover:text-mocha-text mb-6 group w-fit">
                 <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                Back to Writing
+                Back to Blog
             </Link>
 
             <article className="prose prose-invert prose-mocha max-w-none">
@@ -43,3 +43,4 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </div>
     );
 }
+

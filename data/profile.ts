@@ -1,5 +1,6 @@
 export const PROFILE = {
     name: "Sudhanshu Singh",
+    title: "Backend & DevOps Engineer",
     tagline: "Backend & DevOps Engineer (Node.js) • Event-driven Systems • Integrations",
     email: "singhsudhanshuwork@gmail.com",
     location: "Gurgaon, India",
