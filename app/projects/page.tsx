@@ -62,7 +62,7 @@ export default function ProjectsPage() {
 
                     {filteredProjects.length === 0 && (
                         <div className="col-span-1 md:col-span-2 text-center py-12 text-mocha-overlay">
-                            No projects found matching "{filter}".
+                            No projects found matching &quot;{filter}&quot;.
                         </div>
                     )}
                 </div>

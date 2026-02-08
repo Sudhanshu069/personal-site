@@ -18,7 +18,7 @@ export default function ContactPage() {
             <div className="max-w-2xl w-full bg-mocha-mantle/50 border border-mocha-surface0 rounded-xl p-8 shadow-xl">
                 <h1 className="text-3xl font-bold text-center text-mocha-mauve mb-2">Get in Touch</h1>
                 <p className="text-center text-mocha-subtext mb-8">
-                    Have a project in mind or just want to say hi? I'm always open to discussing new opportunities.
+                    Have a project in mind or just want to say hi? I&apos;m always open to discussing new opportunities.
                 </p>
 
                 <div className="flex flex-col gap-6 items-center">

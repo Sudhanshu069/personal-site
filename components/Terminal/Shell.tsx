@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { PROFILE } from "@/data/profile";
 import { PROJECTS } from "@/data/projects";
 import Link from "next/link";
+import { PongGame } from "@/components/Terminal/PongGame";
 
 const ASCII_ART = `
    _____           _ _
@@ -20,10 +21,11 @@ interface HistoryItem {
     output: React.ReactNode;
 }
 
-const COMMANDS = ["help", "about", "projects", "writing", "contact", "resume", "clear", "welcome", "history", "email", "socials", "whoami", "pwd"];
+const COMMANDS = ["help", "about", "projects", "writing", "contact", "resume", "pong", "clear", "welcome", "history", "email", "socials", "whoami", "pwd"];
 
 export function Shell() {
     const [input, setInput] = useState("");
+    const [activeApp, setActiveApp] = useState<null | "pong">(null);
     const [history, setHistory] = useState<HistoryItem[]>(() => [
         {
             id: "welcome",
@@ -36,7 +38,7 @@ export function Shell() {
                     <p>Welcome to my terminal portfolio. (Version 1.0.0)</p>
                     <p>----</p>
                     <p>
-                        This project's source code can be found in this project's{" "}
+                        This project&apos;s source code can be found in this project&apos;s{" "}
                         <a
                             href={PROFILE.socials.find(s => s.name === "GitHub")?.url}
                             target="_blank"
@@ -49,8 +51,8 @@ export function Shell() {
                     </p>
                     <p>----</p>
                     <p>
-                        For a list of available commands, type '
-                        <span className="text-mocha-green">help</span>'.
+                        For a list of available commands, type &apos;
+                        <span className="text-mocha-green">help</span>&apos;.
                     </p>
                 </div>
             ),
@@ -85,6 +87,10 @@ export function Shell() {
 
     const handleCommand = (cmd: string) => {
         const cleanCmd = cmd.trim().toLowerCase();
+        const entryId =
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+                ? crypto.randomUUID()
+                : Math.random().toString(36).slice(2);
         let output: React.ReactNode;
 
         switch (cleanCmd) {
@@ -97,7 +103,7 @@ export function Shell() {
                         <p>Welcome to my terminal portfolio. (Version 1.0.0)</p>
                         <p>----</p>
                         <p>
-                            This project's source code can be found in this project's{" "}
+                            This project&apos;s source code can be found in this project&apos;s{" "}
                             <a
                                 href={PROFILE.socials.find(s => s.name === "GitHub")?.url}
                                 target="_blank"
@@ -109,7 +115,7 @@ export function Shell() {
                             .
                         </p>
                         <p>----</p>
-                        <p>For a list of available commands, type '<span className="text-mocha-green">help</span>'.</p>
+                        <p>For a list of available commands, type &apos;<span className="text-mocha-green">help</span>&apos;.</p>
                     </div>
                 );
                 break;
@@ -136,7 +142,10 @@ export function Shell() {
                             <div className="text-mocha-subtext">- view command history</div>
                             
                             <div><span className="text-mocha-yellow">projects</span></div>
-                            <div className="text-mocha-subtext">- view projects that I've coded</div>
+                            <div className="text-mocha-subtext">- view projects that I&apos;ve coded</div>
+
+                            <div><span className="text-mocha-yellow">pong</span></div>
+                            <div className="text-mocha-subtext">- play ping pong in the terminal</div>
 
                             <div><span className="text-mocha-yellow">pwd</span></div>
                             <div className="text-mocha-subtext">- print current working directory</div>
@@ -256,6 +265,31 @@ export function Shell() {
                     window.location.href = "/resume";
                 }, 1000);
                 break;
+            case "pong":
+                setActiveApp("pong");
+                output = (
+                    <PongGame
+                        onExit={() => {
+                            setActiveApp(null);
+                            setHistory((prev) =>
+                                prev.map((item) =>
+                                    item.id === entryId
+                                        ? {
+                                            ...item,
+                                            output: (
+                                                <div className="text-mocha-subtext font-mono">
+                                                    exited pong
+                                                </div>
+                                            ),
+                                        }
+                                        : item
+                                )
+                            );
+                            setTimeout(() => inputRef.current?.focus(), 0);
+                        }}
+                    />
+                );
+                break;
             case "history":
                 output = (
                     <div className="space-y-1">
@@ -312,7 +346,7 @@ export function Shell() {
         setHistory((prev) => [
             ...prev,
             {
-                id: Math.random().toString(36).substr(2, 9),
+                id: entryId,
                 command: cmd,
                 output,
             },
@@ -380,6 +414,7 @@ export function Shell() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (activeApp) return;
         if (input.trim()) {
             handleCommand(input);
         }
@@ -392,7 +427,9 @@ export function Shell() {
         <div
             className="h-full overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-mocha-surface1"
             ref={scrollRef}
-            onClick={() => inputRef.current?.focus()}
+            onClick={() => {
+                if (!activeApp) inputRef.current?.focus();
+            }}
         >
             {/* History */}
             {history.map((item) => (
@@ -411,21 +448,23 @@ export function Shell() {
             ))}
 
             {/* Input Area */}
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
-                <span className="text-mocha-green">➜</span>
-                <span className="text-mocha-blue">~</span>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="flex-1 bg-transparent outline-none border-none text-mocha-text placeholder-mocha-overlay"
-                    autoFocus
-                    spellCheck={false}
-                    autoComplete="off"
-                />
-            </form>
+            {!activeApp && (
+                <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                    <span className="text-mocha-green">➜</span>
+                    <span className="text-mocha-blue">~</span>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="flex-1 bg-transparent outline-none border-none text-mocha-text placeholder-mocha-overlay"
+                        autoFocus
+                        spellCheck={false}
+                        autoComplete="off"
+                    />
+                </form>
+            )}
         </div>
     );
 }
