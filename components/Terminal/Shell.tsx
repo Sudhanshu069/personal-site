@@ -364,6 +364,7 @@ function ShellWithParams() {
     const searchParams = useSearchParams();
     const [input, setInput] = useState("");
     const [activeApp, setActiveApp] = useState<null | "pong">(null);
+    const [idleLine, setIdleLine] = useState<string | null>(null);
     const [history, setHistory] = useState<HistoryItem[]>(() => [
         {
             id: "welcome",
@@ -382,7 +383,11 @@ function ShellWithParams() {
     const achievementsRef = useRef({
         procrastinator: false,
         documentationEnjoyer: false,
+        speedrunner: false,
     });
+    const commandBurstRef = useRef<number[]>([]);
+    const idleTimerRef = useRef<number | null>(null);
+    const idleShownRef = useRef(false);
 
     useEffect(() => {
         // Auto-scroll to bottom when history changes
@@ -405,6 +410,48 @@ function ShellWithParams() {
         inputRef.current?.focus();
     }, []);
 
+    useEffect(() => {
+        const resetIdle = () => {
+            // any key press counts as "activity"
+            idleShownRef.current = false;
+            setIdleLine(null);
+
+            if (idleTimerRef.current) {
+                window.clearTimeout(idleTimerRef.current);
+                idleTimerRef.current = null;
+            }
+
+            // Don't show idle easter eggs while an "app" (pong) is active.
+            if (activeApp) return;
+
+            idleTimerRef.current = window.setTimeout(() => {
+                if (activeApp) return;
+                if (idleShownRef.current) return;
+
+                idleShownRef.current = true;
+
+                const line =
+                    IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)] ??
+                    IDLE_LINES[0];
+                setIdleLine(line);
+            }, 20_000);
+        };
+
+        const onKeyDown = () => resetIdle();
+        window.addEventListener("keydown", onKeyDown);
+
+        // start timer on mount / when leaving pong
+        resetIdle();
+
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            if (idleTimerRef.current) {
+                window.clearTimeout(idleTimerRef.current);
+                idleTimerRef.current = null;
+            }
+        };
+    }, [activeApp]);
+
     const runParam = searchParams.get("run")?.toLowerCase() ?? null;
 
     const handleCommand = (cmd: string): { nextInput?: string } | void => {
@@ -417,6 +464,22 @@ function ShellWithParams() {
                 : Math.random().toString(36).slice(2);
         let output: React.ReactNode;
         let nextInput: string | undefined;
+        let unlockedSpeedrunner = false;
+
+        // Achievement: speedrunner (4 commands within 10s)
+        // Only count commands that actually print an entry (exclude clear/q which wipe history).
+        if (cleanCmd && cleanCmd !== "clear" && cleanCmd !== "q") {
+            const now = Date.now();
+            const windowMs = 10_000;
+            const next = commandBurstRef.current.filter((t) => now - t <= windowMs);
+            next.push(now);
+            commandBurstRef.current = next;
+
+            if (next.length >= 4 && !achievementsRef.current.speedrunner) {
+                achievementsRef.current.speedrunner = true;
+                unlockedSpeedrunner = true;
+            }
+        }
 
         if (isHelp || isHelpHelp) {
             helpCountRef.current += 1;
@@ -860,6 +923,15 @@ function ShellWithParams() {
                 }
         }
 
+        if (unlockedSpeedrunner && output) {
+            output = (
+                <div className="space-y-2">
+                    <AchievementLine label="speedrunner" />
+                    {output}
+                </div>
+            );
+        }
+
         setHistory((prev) => [
             ...prev,
             {
@@ -948,6 +1020,7 @@ function ShellWithParams() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (activeApp) return;
+        setIdleLine(null);
         const trimmed = input.trim();
         const result = trimmed ? handleCommand(input) : undefined;
 
@@ -987,6 +1060,12 @@ function ShellWithParams() {
                 </div>
             ))}
 
+            {idleLine && !activeApp ? (
+                <div className="mb-2 text-mocha-overlay font-mono">
+                    {idleLine}
+                </div>
+            ) : null}
+
             {/* Input Area */}
             {!activeApp && (
                 <form onSubmit={handleSubmit} className="flex items-center gap-2">
@@ -1008,7 +1087,10 @@ function ShellWithParams() {
                             ref={inputRef}
                             type="text"
                             value={input}
-                            onChange={(e) => setInput(e.target.value)}
+                            onChange={(e) => {
+                                setIdleLine(null);
+                                setInput(e.target.value);
+                            }}
                             onKeyDown={handleKeyDown}
                             className="relative w-full bg-transparent outline-none border-none text-transparent caret-mocha-green font-mono placeholder-mocha-overlay"
                             autoFocus
