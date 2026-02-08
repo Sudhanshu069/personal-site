@@ -60,12 +60,22 @@ export function Shell() {
     const [tempInput, setTempInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const skipAutoScrollOnceRef = useRef(true);
 
     useEffect(() => {
         // Auto-scroll to bottom when history changes
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        if (!scrollRef.current) return;
+
+        // Avoid forcing layout during initial paint (can trigger FOUC warnings in Lighthouse)
+        if (skipAutoScrollOnceRef.current) {
+            skipAutoScrollOnceRef.current = false;
+            return;
         }
+
+        requestAnimationFrame(() => {
+            if (!scrollRef.current) return;
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        });
     }, [history]);
 
     useEffect(() => {
