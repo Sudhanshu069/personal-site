@@ -4,7 +4,15 @@ import React, { useState, useRef, useEffect } from "react";
 import { PROFILE } from "@/data/profile";
 import { PROJECTS } from "@/data/projects";
 import Link from "next/link";
-import { Check, Copy, Terminal } from "lucide-react";
+
+const ASCII_ART = `
+   _____           _ _
+  / ____|         | | |
+ | (___  _   _  __| | |__   __ _ _ __  ___| |__  _   _
+  \\___ \\| | | |/ _\` | '_ \\ / _\` | '_ \\/ __| '_ \\| | | |
+  ____) | |_| | (_| | | | | (_| | | | \\__ \\ | | | |_| |
+ |_____/ \\__,_|\\__,_|_| |_|\\__,_|_| |_|___/_| |_|\\__,_|
+`;
 
 interface HistoryItem {
     id: string;
@@ -12,9 +20,44 @@ interface HistoryItem {
     output: React.ReactNode;
 }
 
+const COMMANDS = ["help", "about", "projects", "writing", "contact", "resume", "clear", "welcome", "history", "email", "socials", "whoami", "pwd"];
+
 export function Shell() {
     const [input, setInput] = useState("");
-    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [history, setHistory] = useState<HistoryItem[]>(() => [
+        {
+            id: "welcome",
+            command: "welcome",
+            output: (
+                <div className="space-y-2 mb-4">
+                    <pre className="text-mocha-mauve font-bold text-xs md:text-sm leading-none mb-4 whitespace-pre overflow-x-auto">
+                        {ASCII_ART}
+                    </pre>
+                    <p>Welcome to my terminal portfolio. (Version 1.0.0)</p>
+                    <p>----</p>
+                    <p>
+                        This project's source code can be found in this project's{" "}
+                        <a
+                            href={PROFILE.socials.find(s => s.name === "GitHub")?.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-mocha-yellow underline decoration-dashed underline-offset-4"
+                        >
+                            GitHub repo
+                        </a>
+                        .
+                    </p>
+                    <p>----</p>
+                    <p>
+                        For a list of available commands, type '
+                        <span className="text-mocha-green">help</span>'.
+                    </p>
+                </div>
+            ),
+        },
+    ]);
+    const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+    const [tempInput, setTempInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -35,14 +78,89 @@ export function Shell() {
         let output: React.ReactNode;
 
         switch (cleanCmd) {
+            case "welcome":
+                output = (
+                    <div className="space-y-2 mb-4">
+                        <pre className="text-mocha-mauve font-bold text-xs md:text-sm leading-none mb-4 whitespace-pre overflow-x-auto">
+                            {ASCII_ART}
+                        </pre>
+                        <p>Welcome to my terminal portfolio. (Version 1.0.0)</p>
+                        <p>----</p>
+                        <p>
+                            This project's source code can be found in this project's{" "}
+                            <a
+                                href={PROFILE.socials.find(s => s.name === "GitHub")?.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-mocha-yellow underline decoration-dashed underline-offset-4"
+                            >
+                                GitHub repo
+                            </a>
+                            .
+                        </p>
+                        <p>----</p>
+                        <p>For a list of available commands, type '<span className="text-mocha-green">help</span>'.</p>
+                    </div>
+                );
+                break;
             case "help":
                 output = (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-mocha-text">
-                        <div><span className="text-mocha-yellow">about</span> - Who am I?</div>
-                        <div><span className="text-mocha-yellow">projects</span> - View my work</div>
-                        <div><span className="text-mocha-yellow">writing</span> - Read my blog</div>
-                        <div><span className="text-mocha-yellow">contact</span> - Get in touch</div>
-                        <div><span className="text-mocha-yellow">clear</span> - Clear terminal</div>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-1 max-w-2xl">
+                            <div><span className="text-mocha-yellow">about</span></div>
+                            <div className="text-mocha-subtext">- about {PROFILE.name}</div>
+                            
+                            <div><span className="text-mocha-yellow">clear</span></div>
+                            <div className="text-mocha-subtext">- clear the terminal</div>
+                            
+                            <div><span className="text-mocha-yellow">contact</span></div>
+                            <div className="text-mocha-subtext">- get in touch</div>
+
+                            <div><span className="text-mocha-yellow">email</span></div>
+                            <div className="text-mocha-subtext">- send an email to me</div>
+                            
+                            <div><span className="text-mocha-yellow">help</span></div>
+                            <div className="text-mocha-subtext">- check available commands</div>
+
+                            <div><span className="text-mocha-yellow">history</span></div>
+                            <div className="text-mocha-subtext">- view command history</div>
+                            
+                            <div><span className="text-mocha-yellow">projects</span></div>
+                            <div className="text-mocha-subtext">- view projects that I've coded</div>
+
+                            <div><span className="text-mocha-yellow">pwd</span></div>
+                            <div className="text-mocha-subtext">- print current working directory</div>
+                            
+                            <div><span className="text-mocha-yellow">resume</span></div>
+                            <div className="text-mocha-subtext">- check out my resume</div>
+
+                            <div><span className="text-mocha-yellow">socials</span></div>
+                            <div className="text-mocha-subtext">- check out my social accounts</div>
+                            
+                            <div><span className="text-mocha-yellow">welcome</span></div>
+                            <div className="text-mocha-subtext">- display hero section</div>
+
+                            <div><span className="text-mocha-yellow">whoami</span></div>
+                            <div className="text-mocha-subtext">- about current user</div>
+                            
+                            <div><span className="text-mocha-yellow">writing</span></div>
+                            <div className="text-mocha-subtext">- read my blog posts</div>
+                        </div>
+                        
+                        <div className="space-y-1 pt-2">
+                            <div className="grid grid-cols-[auto_1fr] gap-x-4">
+                                <div className="text-mocha-text font-bold w-32">Tab</div>
+                                <div className="text-mocha-subtext">=&gt; autocompletes the command</div>
+                            </div>
+                            <div className="grid grid-cols-[auto_1fr] gap-x-4">
+                                <div className="text-mocha-text font-bold w-32">Up Arrow</div>
+                                <div className="text-mocha-subtext">=&gt; go back to previous command</div>
+                            </div>
+                            <div className="grid grid-cols-[auto_1fr] gap-x-4">
+                                <div className="text-mocha-text font-bold w-32">Ctrl + l</div>
+                                <div className="text-mocha-subtext">=&gt; clear the terminal</div>
+                            </div>
+                        </div>
                     </div>
                 );
                 break;
@@ -83,6 +201,24 @@ export function Shell() {
                     </div>
                 );
                 break;
+            case "writing":
+                output = (
+                    <div className="space-y-2">
+                        <p>Redirecting to writing...</p>
+                        <p className="text-mocha-subtext">
+                            If not redirected,{" "}
+                            <Link href="/writing" className="text-mocha-blue underline">
+                                click here
+                            </Link>
+                            .
+                        </p>
+                    </div>
+                );
+                // Client-side navigation helper
+                setTimeout(() => {
+                    window.location.href = "/writing";
+                }, 150);
+                break;
             case "contact":
                 output = (
                     <div className="space-y-2">
@@ -110,6 +246,45 @@ export function Shell() {
                     window.location.href = "/resume";
                 }, 1000);
                 break;
+            case "history":
+                output = (
+                    <div className="space-y-1">
+                        {history.map((item, i) => (
+                            <div key={item.id} className="text-mocha-text">
+                                <span className="text-mocha-subtext mr-4">{i + 1}</span>
+                                {item.command}
+                            </div>
+                        ))}
+                    </div>
+                );
+                break;
+            case "email":
+                output = (
+                    <div className="text-mocha-text">
+                        mailto:<a href={`mailto:${PROFILE.email}`} className="text-mocha-blue underline">{PROFILE.email}</a>
+                    </div>
+                );
+                break;
+            case "socials":
+                output = (
+                    <div className="space-y-2">
+                        {PROFILE.socials.map(s => (
+                            <div key={s.name}>
+                                <span className="text-mocha-green w-24 inline-block">{s.name}</span>
+                                <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-mocha-blue hover:underline">
+                                    {s.url}
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                );
+                break;
+            case "whoami":
+                output = <div className="text-mocha-text">visitor</div>;
+                break;
+            case "pwd":
+                output = <div className="text-mocha-text">/home/visitor</div>;
+                break;
             case "clear":
                 setHistory([]);
                 return;
@@ -134,44 +309,99 @@ export function Shell() {
         ]);
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (history.length === 0) return;
+
+            const newIndex = historyIndex === null ? history.length - 1 : Math.max(0, historyIndex - 1);
+            
+            if (historyIndex === null) {
+                setTempInput(input);
+            }
+            
+            setHistoryIndex(newIndex);
+            setInput(history[newIndex].command);
+        } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (historyIndex === null) return;
+
+            const newIndex = historyIndex + 1;
+            
+            if (newIndex >= history.length) {
+                setHistoryIndex(null);
+                setInput(tempInput);
+            } else {
+                setHistoryIndex(newIndex);
+                setInput(history[newIndex].command);
+            }
+        } else if (e.key === "Tab") {
+            e.preventDefault();
+            if (!input) return;
+
+            const matches = COMMANDS.filter(cmd => cmd.startsWith(input.toLowerCase()));
+            if (matches.length === 1) {
+                setInput(matches[0]);
+            }
+        } else if (e.key === "Escape") {
+            e.preventDefault();
+            setInput("");
+            setHistoryIndex(null);
+            setTempInput("");
+        } else if (e.key.toLowerCase() === "c" && e.ctrlKey) {
+            const el = e.currentTarget;
+            const hasSelection =
+                el.selectionStart !== null &&
+                el.selectionEnd !== null &&
+                el.selectionStart !== el.selectionEnd;
+
+            // Allow normal copy behavior if user selected text in the input
+            if (hasSelection) return;
+
+            e.preventDefault();
+            setInput("");
+            setHistoryIndex(null);
+            setTempInput("");
+        } else if (e.key === "l" && e.ctrlKey) {
+            e.preventDefault();
+            setHistory([]);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (input.trim()) {
             handleCommand(input);
         }
         setInput("");
+        setHistoryIndex(null);
+        setTempInput("");
     };
 
     return (
         <div
-            className="h-full flex flex-col p-2"
+            className="h-full overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-mocha-surface1"
+            ref={scrollRef}
             onClick={() => inputRef.current?.focus()}
         >
-            <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 mb-4">
-                {/* Initial Greeting */}
-                <div className="space-y-2 mb-8">
-                    <p className="text-mocha-subtext">Last login: {new Date().toLocaleString()} on ttys001</p>
-                    <h1 className="text-mocha-mauve text-2xl font-bold">Welcome to {PROFILE.name}'s Terminal</h1>
-                    <p>Type <span className="text-mocha-yellow font-bold">help</span> to see available commands.</p>
-                </div>
-
-                {/* History */}
-                {history.map((item) => (
-                    <div key={item.id} className="space-y-2">
+            {/* History */}
+            {history.map((item) => (
+                <div key={item.id} className="space-y-2 mb-2">
+                    {item.command !== "welcome" && (
                         <div className="flex items-center gap-2">
                             <span className="text-mocha-green">➜</span>
                             <span className="text-mocha-blue">~</span>
                             <span className="text-mocha-text">{item.command}</span>
                         </div>
-                        <div className="pl-6 text-mocha-subtext animate-in fade-in slide-in-from-left-1 duration-200">
-                            {item.output}
-                        </div>
+                    )}
+                    <div className="text-mocha-text animate-in fade-in slide-in-from-left-1 duration-200">
+                        {item.output}
                     </div>
-                ))}
-            </div>
+                </div>
+            ))}
 
             {/* Input Area */}
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 pb-2">
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
                 <span className="text-mocha-green">➜</span>
                 <span className="text-mocha-blue">~</span>
                 <input
@@ -179,6 +409,7 @@ export function Shell() {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     className="flex-1 bg-transparent outline-none border-none text-mocha-text placeholder-mocha-overlay"
                     autoFocus
                     spellCheck={false}

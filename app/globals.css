@@ -3,7 +3,7 @@
 
 
 @theme {
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Catppuccin Mocha Colors */
   --color-mocha-base: #1e1e2e;
@@ -37,9 +37,10 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-mono);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 500;
+  font-variant-ligatures: none;
 }
 
 /* Scrollbar Styling for Terminal Vibe */

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import { TerminalWindow } from "@/components/Terminal/Window";
+import { GlobalHotkeys } from "@/components/GlobalHotkeys";
 
-const jetbrainsMono = JetBrains_Mono({
+const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
+  weight: ["500"],
+  variable: "--font-ibm-plex-mono",
 });
 
 export const metadata: Metadata = {
@@ -20,10 +21,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jetbrainsMono.variable} antialiased bg-mocha-base text-mocha-text min-h-screen flex flex-col items-center justify-center p-4 md:p-8 overscroll-none`}>
-        <TerminalWindow>
-          {children}
-        </TerminalWindow>
+      <body
+        className={`${ibmPlexMono.variable} bg-mocha-base text-mocha-text h-screen w-full overflow-hidden`}
+      >
+        <GlobalHotkeys />
+        {children}
       </body>
     </html>
   );
