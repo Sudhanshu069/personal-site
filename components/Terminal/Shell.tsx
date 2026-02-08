@@ -23,6 +23,19 @@ interface HistoryItem {
 }
 
 const COMMANDS = ["help", "about", "experience", "projects", "blog", "contact", "resume", "pong", "clear", "welcome", "history", "pwd"];
+const SUGGESTION_COMMANDS = Array.from(
+    new Set([
+        ...COMMANDS,
+        // aliases supported by the switch
+        "ls",
+        "skills",
+        "writing",
+        "email",
+        "socials",
+        "whoami",
+        "q",
+    ])
+);
 
 const STATUS_LINES = [
     "Status: prod-safe (probably)",
@@ -33,6 +46,12 @@ const STATUS_LINES = [
     "Tip: type 'pong' if you came here to procrastinate",
 ] as const;
 
+const ROAST_LITE_LINES = [
+    "Nice try.",
+    "That’s not a thing (yet).",
+    "404: command missing.",
+] as const;
+
 const COMMAND_HINTS: Record<string, string> = {
     experience: "skills + work + impact",
     projects: "featured builds",
@@ -40,6 +59,20 @@ const COMMAND_HINTS: Record<string, string> = {
     contact: "email + socials",
     blog: "posts",
 };
+
+const COWSAY_LINES = [
+    // DevOps / Infra vibes
+    "I deploy on Fridays. I also enjoy pain.",
+    "If it's not monitored, it's not real.",
+    "My favorite feature is rollback.",
+    "Works on my machine is not a deployment strategy.",
+    "Auto-scaling is cool until the bill auto-scales too.",
+    "99.9% uptime is still 43 minutes of chaos per month.",
+    "The incident isn’t over until the postmortem exists.",
+    "Idempotency: because humans double-click.",
+    "Cache invalidation is my cardio.",
+    "Minimal UI. Maximum keyboard.",
+] as const;
 
 function getGhostHint(rawInput: string) {
     const input = rawInput.trim().toLowerCase();
@@ -55,6 +88,129 @@ function getGhostHint(rawInput: string) {
 
     const suffix = cmd.slice(input.length);
     return `${suffix}  → ${COMMAND_HINTS[cmd]}`;
+}
+
+function levenshtein(a: string, b: string) {
+    if (a === b) return 0;
+    if (!a) return b.length;
+    if (!b) return a.length;
+
+    const m = a.length;
+    const n = b.length;
+
+    // dp over the shorter string
+    if (n > m) return levenshtein(b, a);
+
+    let prev = new Array(n + 1).fill(0).map((_, i) => i);
+    let curr = new Array(n + 1).fill(0);
+
+    for (let i = 1; i <= m; i++) {
+        curr[0] = i;
+        const ca = a.charCodeAt(i - 1);
+        for (let j = 1; j <= n; j++) {
+            const cost = ca === b.charCodeAt(j - 1) ? 0 : 1;
+            curr[j] = Math.min(
+                prev[j] + 1, // deletion
+                curr[j - 1] + 1, // insertion
+                prev[j - 1] + cost // substitution
+            );
+        }
+        [prev, curr] = [curr, prev];
+    }
+
+    return prev[n];
+}
+
+function suggestCommand(rawInput: string) {
+    const input = rawInput.trim().toLowerCase();
+    if (!input) return null;
+    if (input.includes(" ")) return null;
+    if (input.length < 3) return null;
+
+    const maxDist = input.length <= 4 ? 1 : 2;
+
+    let best: { cmd: string; dist: number } | null = null;
+    let secondBestDist = Number.POSITIVE_INFINITY;
+
+    for (const cmd of SUGGESTION_COMMANDS) {
+        if (cmd === input) return null;
+        const dist = levenshtein(input, cmd);
+        if (dist < (best?.dist ?? Number.POSITIVE_INFINITY)) {
+            secondBestDist = best?.dist ?? Number.POSITIVE_INFINITY;
+            best = { cmd, dist };
+        } else if (dist < secondBestDist) {
+            secondBestDist = dist;
+        }
+    }
+
+    if (!best) return null;
+    if (best.dist > maxDist) return null;
+    if (secondBestDist === best.dist) return null; // ambiguous suggestion
+
+    return best.cmd;
+}
+
+function getDayOfYear(d = new Date()) {
+    // Use UTC so "per day" doesn't shift by local timezone quirks.
+    const y = d.getUTCFullYear();
+    const start = Date.UTC(y, 0, 0);
+    const now = Date.UTC(y, d.getUTCMonth(), d.getUTCDate());
+    return Math.floor((now - start) / 86400000);
+}
+
+function wrapText(text: string, maxWidth: number) {
+    const s = text.trim();
+    if (!s) return [""];
+
+    const words = s.split(/\s+/);
+    const lines: string[] = [];
+    let current = "";
+
+    for (const w of words) {
+        if (!current) {
+            current = w;
+            continue;
+        }
+
+        if ((current + " " + w).length <= maxWidth) {
+            current += " " + w;
+            continue;
+        }
+
+        lines.push(current);
+        current = w;
+    }
+
+    if (current) lines.push(current);
+    return lines.length ? lines : [s];
+}
+
+function renderCowsay(message: string) {
+    const lines = wrapText(message, 46);
+    const width = Math.max(...lines.map((l) => l.length));
+
+    const top = " " + "_".repeat(width + 2);
+    const bottom = " " + "-".repeat(width + 2);
+
+    const bubble =
+        lines.length === 1
+            ? [`< ${lines[0].padEnd(width, " ")} >`]
+            : lines.map((l, idx) => {
+                const padded = l.padEnd(width, " ");
+                if (idx === 0) return `/ ${padded} \\`;
+                if (idx === lines.length - 1) return `\\ ${padded} /`;
+                return `| ${padded} |`;
+            });
+
+    const cow = [
+        "        \\   ^__^",
+        "         \\  (oo)\\_______",
+        "            (__)\\       )\\/\\",
+        "                ||----w |",
+        "                ||     ||",
+    ];
+
+    return [top, ...bubble, bottom, ...cow].join("\n");
 }
 
 function WelcomeBlock({ heading }: { heading: string }) {
@@ -152,13 +308,14 @@ function ShellWithParams() {
 
     const runParam = searchParams.get("run")?.toLowerCase() ?? null;
 
-    const handleCommand = (cmd: string) => {
+    const handleCommand = (cmd: string): { nextInput?: string } | void => {
         const cleanCmd = cmd.trim().toLowerCase();
         const entryId =
             typeof crypto !== "undefined" && "randomUUID" in crypto
                 ? crypto.randomUUID()
                 : Math.random().toString(36).slice(2);
         let output: React.ReactNode;
+        let nextInput: string | undefined;
 
         switch (cleanCmd) {
             case "welcome":
@@ -227,6 +384,17 @@ function ShellWithParams() {
                     </div>
                 );
                 break;
+            case "cowsay": {
+                // Hidden easter egg: not listed in help / autocomplete.
+                const idx = getDayOfYear() % COWSAY_LINES.length;
+                const line = COWSAY_LINES[idx] ?? COWSAY_LINES[0];
+                output = (
+                    <pre className="text-mocha-text whitespace-pre overflow-x-auto">
+                        {renderCowsay(line)}
+                    </pre>
+                );
+                break;
+            }
             case "experience":
             case "skills": // alias
                 output = (
@@ -419,11 +587,46 @@ function ShellWithParams() {
                 output = null;
                 break;
             default:
-                output = (
-                    <div className="text-mocha-red">
-                        Command not found: {cleanCmd}. Type <span className="text-mocha-yellow cursor-pointer" onClick={() => setInput("help")}>help</span> for a list of commands.
-                    </div>
-                );
+                {
+                    const suggestion = suggestCommand(cleanCmd);
+                    if (suggestion) {
+                        nextInput = suggestion;
+                        output = (
+                            <div className="text-mocha-subtext">
+                                Did you mean:{" "}
+                                <span className="text-mocha-yellow">{suggestion}</span>{" "}
+                                ?{" "}
+                                <span className="text-mocha-overlay">(press Enter)</span>
+                            </div>
+                        );
+                        break;
+                    }
+
+                    output = (
+                        <div className="text-mocha-red">
+                            <div>
+                                Unknown command:{" "}
+                                <span className="text-mocha-text">{cleanCmd}</span>
+                            </div>
+                            <div className="text-mocha-subtext mt-1">
+                                Try:{" "}
+                                <span
+                                    className="text-mocha-yellow cursor-pointer"
+                                    onClick={() => setInput("help")}
+                                >
+                                    help
+                                </span>
+                            </div>
+                            <div className="text-mocha-overlay mt-1">
+                                {
+                                    ROAST_LITE_LINES[
+                                        Math.floor(Math.random() * ROAST_LITE_LINES.length)
+                                    ]
+                                }
+                            </div>
+                        </div>
+                    );
+                }
         }
 
         setHistory((prev) => [
@@ -434,6 +637,10 @@ function ShellWithParams() {
                 output,
             },
         ]);
+
+        if (nextInput !== undefined) {
+            return { nextInput };
+        }
     };
 
     useEffect(() => {
@@ -510,10 +717,15 @@ function ShellWithParams() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (activeApp) return;
-        if (input.trim()) {
-            handleCommand(input);
+        const trimmed = input.trim();
+        const result = trimmed ? handleCommand(input) : undefined;
+
+        if (result && typeof result === "object" && "nextInput" in result) {
+            setInput(result.nextInput ?? "");
+        } else {
+            setInput("");
         }
-        setInput("");
+
         setHistoryIndex(null);
         setTempInput("");
     };
