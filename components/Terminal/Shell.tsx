@@ -468,6 +468,7 @@ function ShellWithParams() {
         let nextInput: string | undefined;
         let unlockedSpeedrunner = false;
         let unlockedRecruiterMode = false;
+        let handled = false;
 
         // Achievement: speedrunner (4 commands within 10s)
         // Only count commands that actually print an entry (exclude clear/q which wipe history).
@@ -484,153 +485,169 @@ function ShellWithParams() {
             }
         }
 
-        if (isHelp || isHelpHelp) {
-            helpCountRef.current += 1;
-        }
-
-        if (isHelpHelp && !manpageShownRef.current) {
-            manpageShownRef.current = true;
-            const unlockDoc =
-                helpCountRef.current >= 3 &&
-                !achievementsRef.current.documentationEnjoyer;
-
+        if (/^sudo(\s|$)/.test(cleanCmd)) {
+            handled = true;
             output = (
-                <div className="space-y-3 font-mono">
-                    <div>
-                        <div className="text-mocha-subtext">NAME</div>
-                        <div className="text-mocha-text">
-                            help — terminal commands & shortcuts
-                        </div>
+                <div className="space-y-1 font-mono">
+                    <div className="text-mocha-red">
+                        permission denied: you are not root here.
                     </div>
-
-                    <div>
-                        <div className="text-mocha-subtext">SYNOPSIS</div>
-                        <div className="text-mocha-text">
-                            <span className="text-mocha-yellow">help</span>{" "}
-                            <span className="text-mocha-overlay">|</span>{" "}
-                            <span className="text-mocha-yellow">about</span>{" "}
-                            <span className="text-mocha-overlay">|</span>{" "}
-                            <span className="text-mocha-yellow">experience</span>{" "}
-                            <span className="text-mocha-overlay">|</span>{" "}
-                            <span className="text-mocha-yellow">projects</span>{" "}
-                            <span className="text-mocha-overlay">|</span>{" "}
-                            <span className="text-mocha-yellow">blog</span>{" "}
-                            <span className="text-mocha-overlay">|</span>{" "}
-                            <span className="text-mocha-yellow">contact</span>{" "}
-                            <span className="text-mocha-overlay">|</span>{" "}
-                            <span className="text-mocha-yellow">resume</span>{" "}
-                            <span className="text-mocha-overlay">|</span>{" "}
-                            <span className="text-mocha-yellow">pong</span>
-                        </div>
+                    <div className="text-mocha-subtext">
+                        try: <span className="text-mocha-yellow">experience</span>{" "}
+                        <span className="text-mocha-overlay">(no privileges required)</span>
                     </div>
-
-                    <div>
-                        <div className="text-mocha-subtext">COMMANDS</div>
-                        <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 max-w-3xl">
-                            <div className="text-mocha-yellow">about</div>
-                            <div className="text-mocha-subtext">about {PROFILE.name}</div>
-
-                            <div className="text-mocha-yellow">experience</div>
-                            <div className="text-mocha-subtext">skills + work + impact</div>
-
-                            <div className="text-mocha-yellow">projects</div>
-                            <div className="text-mocha-subtext">featured builds</div>
-
-                            <div className="text-mocha-yellow">blog</div>
-                            <div className="text-mocha-subtext">posts</div>
-
-                            <div className="text-mocha-yellow">contact</div>
-                            <div className="text-mocha-subtext">email + socials</div>
-
-                            <div className="text-mocha-yellow">resume</div>
-                            <div className="text-mocha-subtext">open /resume.pdf</div>
-
-                            <div className="text-mocha-yellow">pong</div>
-                            <div className="text-mocha-subtext">tiny game</div>
-
-                            <div className="text-mocha-yellow">history</div>
-                            <div className="text-mocha-subtext">show previous commands</div>
-
-                            <div className="text-mocha-yellow">clear</div>
-                            <div className="text-mocha-subtext">wipe terminal</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div className="text-mocha-subtext">TIPS</div>
-                        <div className="space-y-1 text-mocha-text">
-                            <div>
-                                <span className="text-mocha-subtext">Tab</span>{" "}
-                                <span className="text-mocha-overlay">→</span>{" "}
-                                autocomplete
-                            </div>
-                            <div>
-                                <span className="text-mocha-subtext">↑/↓</span>{" "}
-                                <span className="text-mocha-overlay">→</span>{" "}
-                                history
-                            </div>
-                            <div>
-                                <span className="text-mocha-subtext">Ctrl+L</span>{" "}
-                                <span className="text-mocha-overlay">→</span>{" "}
-                                clear
-                            </div>
-                        </div>
-                    </div>
-
-                    {unlockDoc ? <AchievementLine label="documentation enjoyer" /> : null}
                 </div>
             );
-
-            setHistory((prev) => [
-                ...prev,
-                {
-                    id: entryId,
-                    command: cmd,
-                    output,
-                },
-            ]);
-
-            if (unlockDoc) {
-                achievementsRef.current.documentationEnjoyer = true;
-            }
-
-            return;
         }
 
-        const effectiveCmd = isHelpHelp ? "help" : cleanCmd;
+        if (!handled) {
+            if (isHelp || isHelpHelp) {
+                helpCountRef.current += 1;
+            }
 
-        // Achievement: recruiter mode (experience → projects → resume)
-        // Also allow the "skills" alias to count as experience.
-        if (!achievementsRef.current.recruiterMode) {
-            const seqCmd = effectiveCmd === "skills" ? "experience" : effectiveCmd;
-            const expected = ["experience", "projects", "resume"];
-            const seqIdx = recruiterSeqRef.current;
+            if (isHelpHelp && !manpageShownRef.current) {
+                manpageShownRef.current = true;
+                const unlockDoc =
+                    helpCountRef.current >= 3 &&
+                    !achievementsRef.current.documentationEnjoyer;
 
-            if (seqCmd === "clear" || seqCmd === "q") {
-                recruiterSeqRef.current = 0;
-            } else {
-                if (seqIdx < expected.length) {
-                    const expectedCmd = expected[seqIdx];
-                    if (seqCmd === expectedCmd) {
-                        recruiterSeqRef.current = (seqIdx + 1) as 1 | 2 | 3;
-                        if (recruiterSeqRef.current === 3) {
-                            achievementsRef.current.recruiterMode = true;
-                            unlockedRecruiterMode = true;
+                output = (
+                    <div className="space-y-3 font-mono">
+                        <div>
+                            <div className="text-mocha-subtext">NAME</div>
+                            <div className="text-mocha-text">
+                                help — terminal commands & shortcuts
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="text-mocha-subtext">SYNOPSIS</div>
+                            <div className="text-mocha-text">
+                                <span className="text-mocha-yellow">help</span>{" "}
+                                <span className="text-mocha-overlay">|</span>{" "}
+                                <span className="text-mocha-yellow">about</span>{" "}
+                                <span className="text-mocha-overlay">|</span>{" "}
+                                <span className="text-mocha-yellow">experience</span>{" "}
+                                <span className="text-mocha-overlay">|</span>{" "}
+                                <span className="text-mocha-yellow">projects</span>{" "}
+                                <span className="text-mocha-overlay">|</span>{" "}
+                                <span className="text-mocha-yellow">blog</span>{" "}
+                                <span className="text-mocha-overlay">|</span>{" "}
+                                <span className="text-mocha-yellow">contact</span>{" "}
+                                <span className="text-mocha-overlay">|</span>{" "}
+                                <span className="text-mocha-yellow">resume</span>{" "}
+                                <span className="text-mocha-overlay">|</span>{" "}
+                                <span className="text-mocha-yellow">pong</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="text-mocha-subtext">COMMANDS</div>
+                            <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 max-w-3xl">
+                                <div className="text-mocha-yellow">about</div>
+                                <div className="text-mocha-subtext">about {PROFILE.name}</div>
+
+                                <div className="text-mocha-yellow">experience</div>
+                                <div className="text-mocha-subtext">skills + work + impact</div>
+
+                                <div className="text-mocha-yellow">projects</div>
+                                <div className="text-mocha-subtext">featured builds</div>
+
+                                <div className="text-mocha-yellow">blog</div>
+                                <div className="text-mocha-subtext">posts</div>
+
+                                <div className="text-mocha-yellow">contact</div>
+                                <div className="text-mocha-subtext">email + socials</div>
+
+                                <div className="text-mocha-yellow">resume</div>
+                                <div className="text-mocha-subtext">open /resume.pdf</div>
+
+                                <div className="text-mocha-yellow">pong</div>
+                                <div className="text-mocha-subtext">tiny game</div>
+
+                                <div className="text-mocha-yellow">history</div>
+                                <div className="text-mocha-subtext">show previous commands</div>
+
+                                <div className="text-mocha-yellow">clear</div>
+                                <div className="text-mocha-subtext">wipe terminal</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="text-mocha-subtext">TIPS</div>
+                            <div className="space-y-1 text-mocha-text">
+                                <div>
+                                    <span className="text-mocha-subtext">Tab</span>{" "}
+                                    <span className="text-mocha-overlay">→</span>{" "}
+                                    autocomplete
+                                </div>
+                                <div>
+                                    <span className="text-mocha-subtext">↑/↓</span>{" "}
+                                    <span className="text-mocha-overlay">→</span>{" "}
+                                    history
+                                </div>
+                                <div>
+                                    <span className="text-mocha-subtext">Ctrl+L</span>{" "}
+                                    <span className="text-mocha-overlay">→</span>{" "}
+                                    clear
+                                </div>
+                            </div>
+                        </div>
+
+                        {unlockDoc ? <AchievementLine label="documentation enjoyer" /> : null}
+                    </div>
+                );
+
+                setHistory((prev) => [
+                    ...prev,
+                    {
+                        id: entryId,
+                        command: cmd,
+                        output,
+                    },
+                ]);
+
+                if (unlockDoc) {
+                    achievementsRef.current.documentationEnjoyer = true;
+                }
+
+                return;
+            }
+
+            const effectiveCmd = isHelpHelp ? "help" : cleanCmd;
+
+            // Achievement: recruiter mode (experience → projects → resume)
+            // Also allow the "skills" alias to count as experience.
+            if (!achievementsRef.current.recruiterMode) {
+                const seqCmd = effectiveCmd === "skills" ? "experience" : effectiveCmd;
+                const expected = ["experience", "projects", "resume"];
+                const seqIdx = recruiterSeqRef.current;
+
+                if (seqCmd === "clear" || seqCmd === "q") {
+                    recruiterSeqRef.current = 0;
+                } else {
+                    if (seqIdx < expected.length) {
+                        const expectedCmd = expected[seqIdx];
+                        if (seqCmd === expectedCmd) {
+                            recruiterSeqRef.current = (seqIdx + 1) as 1 | 2 | 3;
+                            if (recruiterSeqRef.current === 3) {
+                                achievementsRef.current.recruiterMode = true;
+                                unlockedRecruiterMode = true;
+                            }
+                        } else if (seqCmd === "experience") {
+                            recruiterSeqRef.current = 1;
+                        } else {
+                            recruiterSeqRef.current = 0;
                         }
                     } else if (seqCmd === "experience") {
                         recruiterSeqRef.current = 1;
                     } else {
                         recruiterSeqRef.current = 0;
                     }
-                } else if (seqCmd === "experience") {
-                    recruiterSeqRef.current = 1;
-                } else {
-                    recruiterSeqRef.current = 0;
                 }
             }
-        }
 
-        switch (effectiveCmd) {
+            switch (effectiveCmd) {
             case "welcome":
                 output = <WelcomeBlock heading="Try this:" />;
                 break;
@@ -767,50 +784,133 @@ function ShellWithParams() {
                 );
                 break;
             case "projects":
-                output = (
-                    <div className="space-y-4">
-                        <p className="text-mocha-overlay">Listing top projects...</p>
-                        <div className="grid grid-cols-1 gap-4">
-                            {PROJECTS.map((p) => (
-                                <div key={p.id} className="border border-mocha-surface0 p-3 rounded hover:border-mocha-blue transition-colors">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-mocha-blue font-bold">{p.title}</span>
-                                        <Link href={`/projects/${p.id}`} className="text-xs text-mocha-overlay underline decoration-mocha-overlay hover:text-mocha-text">
-                                            View Details
-                                        </Link>
+                {
+                    const finalOutput = (
+                        <div className="space-y-4">
+                            <p className="text-mocha-overlay">Listing top projects...</p>
+                            <div className="grid grid-cols-1 gap-4">
+                                {PROJECTS.map((p) => (
+                                    <div key={p.id} className="border border-mocha-surface0 p-3 rounded hover:border-mocha-blue transition-colors">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="text-mocha-blue font-bold">{p.title}</span>
+                                            <Link href={`/projects/${p.id}`} className="text-xs text-mocha-overlay underline decoration-mocha-overlay hover:text-mocha-text">
+                                                View Details
+                                            </Link>
+                                        </div>
+                                        <p className="text-mocha-subtext text-sm mb-2">{p.description}</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {p.tech.map((t) => (
+                                                <span key={t} className="text-xs px-1.5 py-0.5 bg-mocha-surface0 text-mocha-text rounded">
+                                                    {t}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <p className="text-mocha-subtext text-sm mb-2">{p.description}</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {p.tech.map((t) => (
-                                            <span key={t} className="text-xs px-1.5 py-0.5 bg-mocha-surface0 text-mocha-text rounded">
-                                                {t}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
+                                ))}
+                            </div>
+                        </div>
+                    );
+
+                    const stage = (lines: string[]) => (
+                        <div className="space-y-1 font-mono text-mocha-overlay">
+                            {lines.map((l) => (
+                                <div key={l}>{l}</div>
                             ))}
                         </div>
-                    </div>
-                );
+                    );
+
+                    output = stage(["fetching…"]);
+                    window.setTimeout(() => {
+                        setHistory((prev) =>
+                            prev.map((item) =>
+                                item.id === entryId ? { ...item, output: stage(["fetching…", "rendering…"]) } : item
+                            )
+                        );
+                    }, 50);
+                    window.setTimeout(() => {
+                        setHistory((prev) =>
+                            prev.map((item) =>
+                                item.id === entryId ? { ...item, output: stage(["fetching…", "rendering…", "done."]) } : item
+                            )
+                        );
+                    }, 100);
+                    window.setTimeout(() => {
+                        setHistory((prev) =>
+                            prev.map((item) =>
+                                item.id === entryId
+                                    ? {
+                                        ...item,
+                                        output: (
+                                            <div className="space-y-3">
+                                                <div className="text-mocha-green font-mono text-sm">done.</div>
+                                                {finalOutput}
+                                            </div>
+                                        ),
+                                    }
+                                    : item
+                            )
+                        );
+                    }, 150);
+                }
                 break;
             case "blog":
             case "writing": // alias
-                output = (
-                    <div className="space-y-2">
-                        <p>Redirecting to blog...</p>
-                        <p className="text-mocha-subtext">
-                            If not redirected,{" "}
-                            <Link href="/blog" className="text-mocha-blue underline">
-                                click here
-                            </Link>
-                            .
-                        </p>
-                    </div>
-                );
-                // Client-side navigation helper
-                setTimeout(() => {
-                    window.location.href = "/blog";
-                }, 150);
+                {
+                    const finalOutput = (
+                        <div className="space-y-2">
+                            <p>Redirecting to blog...</p>
+                            <p className="text-mocha-subtext">
+                                If not redirected,{" "}
+                                <Link href="/blog" className="text-mocha-blue underline">
+                                    click here
+                                </Link>
+                                .
+                            </p>
+                        </div>
+                    );
+
+                    const stage = (lines: string[]) => (
+                        <div className="space-y-1 font-mono text-mocha-overlay">
+                            {lines.map((l) => (
+                                <div key={l}>{l}</div>
+                            ))}
+                        </div>
+                    );
+
+                    output = stage(["fetching…"]);
+                    window.setTimeout(() => {
+                        setHistory((prev) =>
+                            prev.map((item) =>
+                                item.id === entryId ? { ...item, output: stage(["fetching…", "rendering…"]) } : item
+                            )
+                        );
+                    }, 50);
+                    window.setTimeout(() => {
+                        setHistory((prev) =>
+                            prev.map((item) =>
+                                item.id === entryId ? { ...item, output: stage(["fetching…", "rendering…", "done."]) } : item
+                            )
+                        );
+                    }, 100);
+                    window.setTimeout(() => {
+                        setHistory((prev) =>
+                            prev.map((item) =>
+                                item.id === entryId
+                                    ? {
+                                        ...item,
+                                        output: (
+                                            <div className="space-y-3">
+                                                <div className="text-mocha-green font-mono text-sm">done.</div>
+                                                {finalOutput}
+                                            </div>
+                                        ),
+                                    }
+                                    : item
+                            )
+                        );
+                        window.location.href = "/blog";
+                    }, 150);
+                }
                 break;
             case "contact":
                 output = (
@@ -958,6 +1058,7 @@ function ShellWithParams() {
                         </div>
                     );
                 }
+        }
         }
 
         const unlockedLabels: string[] = [];
