@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { PROFILE } from "@/data/profile";
 import { PROJECTS } from "@/data/projects";
 import Link from "next/link";
@@ -111,7 +111,7 @@ function WelcomeBlock({ heading }: { heading: string }) {
     );
 }
 
-export function Shell() {
+function ShellWithParams() {
     const searchParams = useSearchParams();
     const [input, setInput] = useState("");
     const [activeApp, setActiveApp] = useState<null | "pong">(null);
@@ -171,13 +171,13 @@ export function Shell() {
                         <div className="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-1 max-w-2xl">
                             <div><span className="text-mocha-yellow">about</span></div>
                             <div className="text-mocha-subtext">- about {PROFILE.name}</div>
-                            
+
                             <div><span className="text-mocha-yellow">clear</span></div>
                             <div className="text-mocha-subtext">- clear the terminal</div>
-                            
+
                             <div><span className="text-mocha-yellow">contact</span></div>
                             <div className="text-mocha-subtext">- reach me (email + socials)</div>
-                            
+
                             <div><span className="text-mocha-yellow">experience</span></div>
                             <div className="text-mocha-subtext">- view skills + work experience</div>
 
@@ -186,7 +186,7 @@ export function Shell() {
 
                             <div><span className="text-mocha-yellow">history</span></div>
                             <div className="text-mocha-subtext">- view command history</div>
-                            
+
                             <div><span className="text-mocha-yellow">projects</span></div>
                             <div className="text-mocha-subtext">- view projects that I&apos;ve coded</div>
 
@@ -199,7 +199,7 @@ export function Shell() {
                             <div><span className="text-mocha-yellow">blog</span></div>
                             <div className="text-mocha-subtext">- read my blog posts</div>
                         </div>
-                        
+
                         <div className="space-y-1 pt-2">
                             <div className="grid grid-cols-[auto_1fr] gap-x-4">
                                 <div className="text-mocha-text font-bold w-32">Tab</div>
@@ -454,11 +454,11 @@ export function Shell() {
             if (history.length === 0) return;
 
             const newIndex = historyIndex === null ? history.length - 1 : Math.max(0, historyIndex - 1);
-            
+
             if (historyIndex === null) {
                 setTempInput(input);
             }
-            
+
             setHistoryIndex(newIndex);
             setInput(history[newIndex].command);
         } else if (e.key === "ArrowDown") {
@@ -466,7 +466,7 @@ export function Shell() {
             if (historyIndex === null) return;
 
             const newIndex = historyIndex + 1;
-            
+
             if (newIndex >= history.length) {
                 setHistoryIndex(null);
                 setInput(tempInput);
@@ -576,5 +576,17 @@ export function Shell() {
                 </form>
             )}
         </div>
+    );
+}
+
+export function Shell() {
+    return (
+        <Suspense fallback={
+            <div className="h-full overflow-y-auto p-4 md:p-6 flex items-center justify-center">
+                <div className="text-mocha-overlay">Loading terminal...</div>
+            </div>
+        }>
+            <ShellWithParams />
+        </Suspense>
     );
 }
