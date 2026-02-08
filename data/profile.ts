@@ -7,6 +7,7 @@ export const PROFILE = {
     socials: [
       { name: "GitHub", url: "https://github.com/Sudhanshu069" },
       { name: "LinkedIn", url: "https://linkedin.com/in/sudhanshusinghwork" },
+      { name: "LeetCode", url: "https://leetcode.com/u/detoxedBrain1/" },
     ],
     experience: [
       {

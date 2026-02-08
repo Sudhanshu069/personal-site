@@ -276,9 +276,13 @@ async function copyToClipboard(text: string) {
 function CopyableLink({
     label,
     value,
+    openInNewTab,
+    suffix,
 }: {
     label: string;
     value: string;
+    openInNewTab?: boolean;
+    suffix?: string;
 }) {
     const [copied, setCopied] = useState(false);
 
@@ -286,18 +290,40 @@ function CopyableLink({
         <div className="space-y-1">
             <div className="flex flex-wrap gap-x-2 gap-y-1 items-baseline">
                 <span className="text-mocha-subtext">{label}:</span>
-                <button
-                    type="button"
-                    onClick={async () => {
-                        const ok = await copyToClipboard(value);
-                        setCopied(ok);
-                        window.setTimeout(() => setCopied(false), 1200);
-                    }}
-                    className="text-mocha-mauve hover:text-mocha-pink underline decoration-mocha-overlay text-left"
-                    title="Click to copy"
-                >
-                    {value}
-                </button>
+                {openInNewTab ? (
+                    <a
+                        href={value}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={async () => {
+                            const ok = await copyToClipboard(value);
+                            setCopied(ok);
+                            window.setTimeout(() => setCopied(false), 1200);
+                        }}
+                        className="text-mocha-mauve hover:text-mocha-pink underline decoration-mocha-overlay text-left"
+                        title="Click to open + copy"
+                    >
+                        {value}
+                    </a>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            const ok = await copyToClipboard(value);
+                            setCopied(ok);
+                            window.setTimeout(() => setCopied(false), 1200);
+                        }}
+                        className="text-mocha-mauve hover:text-mocha-pink underline decoration-mocha-overlay text-left"
+                        title="Click to copy"
+                    >
+                        {value}
+                    </button>
+                )}
+                {suffix ? (
+                    <span className="text-mocha-overlay">
+                        {suffix}
+                    </span>
+                ) : null}
             </div>
             {copied ? (
                 <div className="text-xs font-mono text-mocha-green">copied ✓</div>
@@ -931,7 +957,13 @@ function ShellWithParams() {
                         </p>
                         <div className="space-y-2">
                             {PROFILE.socials.map((s) => (
-                                <CopyableLink key={s.name} label={s.name} value={s.url} />
+                                <CopyableLink
+                                    key={s.name}
+                                    label={s.name}
+                                    value={s.url}
+                                    openInNewTab={s.name === "LeetCode"}
+                                    suffix={s.name === "LeetCode" ? "(DSA museum)" : undefined}
+                                />
                             ))}
                         </div>
                     </div>
