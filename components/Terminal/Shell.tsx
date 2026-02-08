@@ -653,8 +653,15 @@ function ShellWithParams() {
                 break;
             case "ls":
             case "help":
+                {
+                const chosenOne = effectiveCmd === "help" && Math.random() < 0.005;
                 output = (
                     <div className="space-y-4">
+                        {chosenOne ? (
+                            <div className="text-mocha-mauve font-mono">
+                                you are the chosen one.
+                            </div>
+                        ) : null}
                         <div className="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-1 max-w-2xl">
                             <div><span className="text-mocha-yellow">about</span></div>
                             <div className="text-mocha-subtext">- about {PROFILE.name}</div>
@@ -718,6 +725,7 @@ function ShellWithParams() {
                     achievementsRef.current.documentationEnjoyer = true;
                 }
                 break;
+                }
             case "about":
                 output = (
                     <div className="space-y-2">
