@@ -384,8 +384,10 @@ function ShellWithParams() {
         procrastinator: false,
         documentationEnjoyer: false,
         speedrunner: false,
+        recruiterMode: false,
     });
     const commandBurstRef = useRef<number[]>([]);
+    const recruiterSeqRef = useRef<0 | 1 | 2 | 3>(0);
     const idleTimerRef = useRef<number | null>(null);
     const idleShownRef = useRef(false);
 
@@ -465,6 +467,7 @@ function ShellWithParams() {
         let output: React.ReactNode;
         let nextInput: string | undefined;
         let unlockedSpeedrunner = false;
+        let unlockedRecruiterMode = false;
 
         // Achievement: speedrunner (4 commands within 10s)
         // Only count commands that actually print an entry (exclude clear/q which wipe history).
@@ -595,6 +598,37 @@ function ShellWithParams() {
         }
 
         const effectiveCmd = isHelpHelp ? "help" : cleanCmd;
+
+        // Achievement: recruiter mode (experience → projects → resume)
+        // Also allow the "skills" alias to count as experience.
+        if (!achievementsRef.current.recruiterMode) {
+            const seqCmd = effectiveCmd === "skills" ? "experience" : effectiveCmd;
+            const expected = ["experience", "projects", "resume"];
+            const seqIdx = recruiterSeqRef.current;
+
+            if (seqCmd === "clear" || seqCmd === "q") {
+                recruiterSeqRef.current = 0;
+            } else {
+                if (seqIdx < expected.length) {
+                    const expectedCmd = expected[seqIdx];
+                    if (seqCmd === expectedCmd) {
+                        recruiterSeqRef.current = (seqIdx + 1) as 1 | 2 | 3;
+                        if (recruiterSeqRef.current === 3) {
+                            achievementsRef.current.recruiterMode = true;
+                            unlockedRecruiterMode = true;
+                        }
+                    } else if (seqCmd === "experience") {
+                        recruiterSeqRef.current = 1;
+                    } else {
+                        recruiterSeqRef.current = 0;
+                    }
+                } else if (seqCmd === "experience") {
+                    recruiterSeqRef.current = 1;
+                } else {
+                    recruiterSeqRef.current = 0;
+                }
+            }
+        }
 
         switch (effectiveCmd) {
             case "welcome":
@@ -806,20 +840,23 @@ function ShellWithParams() {
             case "resume":
                 output = (
                     <div className="space-y-2">
-                        <p>Redirecting to resume...</p>
+                        <p>Opening resume in a new tab...</p>
                         <p className="text-mocha-subtext">
-                            If not redirected,{" "}
-                            <a href="/resume.pdf" className="text-mocha-blue underline">
+                            If it didn&apos;t open,{" "}
+                            <a
+                                href="/resume.pdf"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-mocha-blue underline"
+                            >
                                 click here
                             </a>
                             .
                         </p>
                     </div>
                 );
-                // Client-side navigation helper
-                setTimeout(() => {
-                    window.location.href = "/resume.pdf";
-                }, 150);
+                // Open in new tab (keep current terminal session)
+                window.open("/resume.pdf", "_blank", "noopener,noreferrer");
                 break;
             case "pong":
                 setActiveApp("pong");
@@ -923,10 +960,16 @@ function ShellWithParams() {
                 }
         }
 
-        if (unlockedSpeedrunner && output) {
+        const unlockedLabels: string[] = [];
+        if (unlockedRecruiterMode) unlockedLabels.push("recruiter mode");
+        if (unlockedSpeedrunner) unlockedLabels.push("speedrunner");
+
+        if (unlockedLabels.length && output) {
             output = (
                 <div className="space-y-2">
-                    <AchievementLine label="speedrunner" />
+                    {unlockedLabels.map((label) => (
+                        <AchievementLine key={label} label={label} />
+                    ))}
                     {output}
                 </div>
             );
